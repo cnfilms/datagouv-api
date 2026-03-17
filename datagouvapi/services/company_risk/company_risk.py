@@ -1,0 +1,163 @@
+import json
+from datetime import date, datetime
+from locale import getlocale
+from typing import Optional, Union
+
+from dateutil.relativedelta import relativedelta
+
+from datagouvapi.client import GouvApiClient, GouvSearchResult
+from datagouvapi.services.company_risk.constants import BASE_WHERE_CLAUSE, DATE_FORMATS, API_SERVICE, API_URL, \
+    API_DATASET_ID, \
+    DELAY_RECOVERY, API_SEARCH_PARAMS, MAX_BATCH_SIZE, BATCH_SIZE_ERROR, MANDATORY_FIELDS
+from datagouvapi.services.company_risk.models import JudgmentEnum, CompanyJudgment, Identifier, Siren, SirenIndex
+from datagouvapi.tools.helpers import unaccent
+
+
+class CompanyRiskClient(GouvApiClient):
+    """
+            BODACC-specific api client to interrogate a list of companies and see their publications.
+        param: all_identifiers: list of SIREN strings, or dict mapping SIREN to your own identifiers (string, integer or UUID).
+        param: api_key: Optional, api key for the BODACC API
+        param: filter_start_date: Optional, to restrict the search - Format 'YYYY-MM-DD'
+        param: filter_end_date: Optional, to restrict the search - Format 'YYYY-MM-DD'
+        param: batch_size: Default is 140, limit for number of SIREN in one batch, to avoid http params overload.
+    """
+    def __init__(self, all_identifiers: SirenIndex, api_key=None, locale_name=None, filter_start_date=None, filter_end_date=None,
+                 batch_size=MAX_BATCH_SIZE):
+        super().__init__(service=API_SERVICE, api_url=API_URL, dataset_id=API_DATASET_ID,
+                         api_key=api_key, locale_name=locale_name)
+        self.batch_size = batch_size
+        if self.batch_size > MAX_BATCH_SIZE:
+            self._raise(BATCH_SIZE_ERROR)
+        self.identifiers = all_identifiers
+        self.siren_list = list(self.identifiers.keys()) if isinstance(self.identifiers, dict) else self.identifiers
+        self.filter_start_date = filter_start_date
+        self.filter_end_date = filter_end_date
+        self.params = API_SEARCH_PARAMS
+        self.raw_data = []
+        self.merged_data = dict()
+
+
+    def _compute_where_clause(self, batch_siren_list: list[Siren]) -> str:
+
+        sirens_quoted = ', '.join([f'"{s}"' for s in batch_siren_list])
+        clause = f"registre IN ({sirens_quoted}) and {BASE_WHERE_CLAUSE}"
+        if self.filter_start_date:
+            clause += f"and dateparution >= {self.filter_start_date.strftime('%Y-%m-%d')}"
+        if self.filter_end_date:
+            clause += f"and dateparution <= {self.filter_end_date.strftime('%Y-%m-%d')}"
+        return clause
+
+    def _build_company_judgment(self, item: dict, siren: Siren, identifier: Optional[Identifier]) -> Optional[CompanyJudgment]:
+        """
+            Resolve the response from BODACC-api into a CompanyJudgment dict.
+        :param item: publication object
+        :param siren: SIREN of the company
+        :param identifier: Optional, custom identifier for the company.
+        :return: Computed judgment infos dict
+        """
+        record_id = item.get('id', None)
+        raw_jugement = json.loads(item.get('jugement'))
+        if not raw_jugement:
+            return None
+        raw_complement = raw_jugement.get('complementJugement', None)
+        raw_nature = raw_jugement.get('nature', None)
+        raw_date = raw_jugement.get('date', None)
+
+        if not (raw_jugement or raw_complement or raw_nature or raw_date):
+            return None
+
+        if not (current_judgment := self.resolve_judgment(raw_nature) or self.resolve_judgment(raw_complement)):
+            self._warn(record_id, f"Cannot process judgment of {raw_nature}")
+            return None
+
+        if not (record_date := self.resolve_date(item.get('dateparution'))):
+            self._warn(record_id, f"Cannot process date: {item.get('dateparution')}")
+            return None
+
+
+        date_debut = self.resolve_date(raw_date)
+        if not date_debut:
+            self._warn(record_id, f"Cannot process date: {raw_date}")
+            return None
+
+        date_fin = date_debut + relativedelta(months=DELAY_RECOVERY) \
+            if current_judgment == JudgmentEnum.REDRESSEMENT.value else None
+
+        return CompanyJudgment(
+            siren=siren,
+            identifier=identifier,
+            record_id=item.get('id', None),
+            date=record_date,
+            raw_data=raw_jugement,
+            judgment=current_judgment,
+            start_date=date_debut,
+            expected_end_date=date_fin,
+        )
+
+
+    def get_processed_risky_companies(self) -> Union[dict[Identifier, CompanyJudgment]]:
+        """
+            Map a risk judgment for each company.
+        :return: A registry mapping the SIREN or custom ID to its list of recovery and bankrupt court judgments.
+        """
+        parsed_douteux = dict()
+
+        for item in self.get_risky_companies().get('records', []):
+            for field in MANDATORY_FIELDS:
+                if not item.get(field):
+                    self._warn(item.get('id', None), f"Mandatory {field} property is missing")
+                    break
+
+            if not (siren := next((s for s in self.siren_list if s in item.get('registre')), None)):
+                continue
+            identifier = self.identifiers.get(siren, siren) if isinstance(self.identifiers, dict) else siren
+
+            judgement_obj = self._build_company_judgment(item, siren, identifier)
+            if judgement_obj is None:
+                self._warn(item.get('id'), "Judgement cannot be processed")
+                continue
+
+            if not identifier in parsed_douteux:
+                parsed_douteux[identifier] = []
+
+            parsed_douteux[identifier].append(judgement_obj)
+
+        return parsed_douteux
+
+    def resolve_date(self, date_str: str) -> Optional[date]:
+        """
+            Format date string into a usable datetime.date object.
+        """
+        if not getlocale():
+            raise self._raise("Cannont find locale")
+        for fmt in DATE_FORMATS:
+            try:
+                return datetime.strptime(date_str.strip(), fmt).date()
+            except ValueError:
+                continue
+        return None
+
+    @classmethod
+    def resolve_judgment(cls, jugement: str) -> Optional[JudgmentEnum]:
+        jugement = unaccent(jugement).lower()
+        if "liquidation" in jugement or "conversion" in jugement:
+            return JudgmentEnum.LIQUIDATION
+        if "redressement" in jugement:
+            return JudgmentEnum.REDRESSEMENT
+        if any(word in jugement for word in ("annulation", "infirmation")):
+            return JudgmentEnum.ANNULEE
+        return None
+
+    def get_risky_companies(self) -> GouvSearchResult:
+        """
+            Interrogate the API until we searched all SIREN numbers, according to the given batch size.
+            Merge data of each batch into one functional dict.
+        :return: GouvSearchResult
+        """
+        for i in range(0, len(self.siren_list), self.batch_size):
+            batch_siren_list = self.siren_list[i:i + self.batch_size]
+            self.params['where'] = self._compute_where_clause(batch_siren_list=batch_siren_list)
+            batch_douteux = self.get_data(params=self.params)
+            self.raw_data.append(batch_douteux)
+        return self.merge_gouv_data(self.raw_data)

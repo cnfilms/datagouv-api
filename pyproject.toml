@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "datagouvapi"
+version = "0.1.0"
+description = "French Gouv Opendata API client"
+keywords = ["opendata", "gouv", "data.gouv.fr", "bodacc", "calendrier-scolaire"]
+
+requires-python = ">=3.9,<3.10"
+readme = "README.md"
+authors = [
+    { name="Axelle Blondin", email="axelle.blondin@cinego.net" }
+]
+dependencies = [
+    "requests>=2.31,<3.0",
+    "python-dateutil>=2.9,<3.0",
+]
+
+[tool.coverage.report]
+omit = ["tests/*"]
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["datagouvapi*"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+    "pytest-mock>=3.15.1",
+    "mypy>=1.8,<2.0",
+    "ruff>=0.3,<1.0"
+]
