@@ -1,21 +1,23 @@
 import datetime
 import uuid
-from dataclasses import dataclass
 from enum import Enum
 from typing import TypedDict, Union, Optional
 
 
 class JudgmentEnum(Enum):
-    """ Nature of court judgment of a company
-        French wording is kept to avoid miscomprehension of Bodacc publications
+    """Nature of court judgment of a company
+    French wording is kept to avoid miscomprehension of Bodacc publications
     """
-    REDRESSEMENT = 'REDRESSEMENT'
-    LIQUIDATION = 'LIQUIDATION'
-    ANNULEE = 'ANNULEE'
+
+    REDRESSEMENT = "REDRESSEMENT"
+    LIQUIDATION = "LIQUIDATION"
+    ANNULEE = "ANNULEE"
+
 
 Identifier = Union[str, int, uuid.UUID]
-SirenIndex = dict[str, Identifier]
 Siren = str
+SirenIndex = dict[Siren, Identifier]
+
 
 class CompanyJudgment(TypedDict):
     identifier: Optional[Identifier]
@@ -25,6 +27,4 @@ class CompanyJudgment(TypedDict):
     raw_data: str
     judgment: JudgmentEnum
     start_date: datetime.date
-    expected_end_date: datetime.date
-
-
+    expected_end_date: Optional[datetime.date]
