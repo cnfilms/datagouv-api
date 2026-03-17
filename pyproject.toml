@@ -1,13 +1,8 @@
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "datagouvapi"
 version = "0.1.0"
 description = "French Gouv Opendata API client"
 keywords = ["opendata", "gouv", "data.gouv.fr", "bodacc", "calendrier-scolaire"]
-
 requires-python = ">=3.9,<3.10"
 readme = "README.md"
 authors = [
@@ -18,8 +13,13 @@ dependencies = [
     "python-dateutil>=2.9,<3.0",
 ]
 
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [tool.coverage.report]
 omit = ["tests/*"]
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
