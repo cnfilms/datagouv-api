@@ -26,6 +26,7 @@ from datagouvapi.services.company_risk.models import (
 )
 from datagouvapi.tools.helpers import unaccent, merge_gouv_data
 import logging
+logger = logging.getLogger(__name__)
 
 from datagouvapi.tools.models import GouvSearchResult
 
@@ -170,8 +171,6 @@ class CompanyRiskClient(GouvApiClient):
         """
         Format date string into a usable datetime.date object.
         """
-        if not getlocale():
-            raise self._raise("Cannont find locale")
         for fmt in DATE_FORMATS:
             try:
                 return datetime.strptime(date_str.strip(), fmt).date()
