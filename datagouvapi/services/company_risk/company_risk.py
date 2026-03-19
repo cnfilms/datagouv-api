@@ -114,7 +114,7 @@ class CompanyRiskClient(GouvApiClient):
 
         date_fin = (
             date_debut + relativedelta(months=DELAY_RECOVERY)
-            if current_judgment == JudgmentEnum.REDRESSEMENT.value
+            if current_judgment == JudgmentEnum.REDRESSEMENT
             else None
         )
 
