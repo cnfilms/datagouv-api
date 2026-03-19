@@ -128,7 +128,7 @@ class CompanyRiskClient(GouvApiClient):
             expected_end_date=date_fin,
         )
 
-    def get_processed_risky_companies(self) -> dict[Identifier, CompanyJudgment]:
+    def get_processed_risky_companies(self) -> dict[Identifier, list[CompanyJudgment]]:
         """
             Map a risk judgment for each company.
         :return: A registry mapping the SIREN or custom ID to its list of recovery and bankrupt court judgments.
