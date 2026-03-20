@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import date, datetime
 from locale import getlocale
 from typing import Optional, Union
@@ -113,7 +114,7 @@ class CompanyRiskClient(GouvApiClient):
             return None
 
         date_fin = (
-            date_debut + relativedelta(months=DELAY_RECOVERY)
+            _parse_date_fin_from_complement(date_debut=date_debut,raw_data=item)
             if current_judgment == JudgmentEnum.REDRESSEMENT
             else None
         )
@@ -209,3 +210,45 @@ class CompanyRiskClient(GouvApiClient):
                 break
             _raw_data.append(batch_douteux)
         return merge_gouv_data(_raw_data)
+
+
+def _parse_date_fin_from_complement(complement_jugement: str, date_debut: date) -> Optional[date]:
+    """
+    Parse the complementJugement field to extract a custom duration for redressement.
+
+    By default, redressement is 2 months, but the complement_jugement may specify
+    a different duration (e.g., "période d'observation de 6 mois").
+
+    :param complement_jugement: The complementJugement field from Bodacc raw data
+    :param date_debut: The start date of the procedure already resolved
+    :return: The calculated end date
+    """
+
+    if not complement_jugement:
+        return date_debut + relativedelta(months=DELAY_RECOVERY) if date_debut else None
+
+    complement_lower = complement_jugement.lower()
+
+    # Try to find duration patterns like "X mois", "X semaines", "X jours"
+    # Pattern for months: "6 mois", "six mois", etc.
+    months_pattern = r'(\d+)\s*mois'
+    weeks_pattern = r'(\d+)\s*semaines?'
+    days_pattern = r'(\d+)\s*jours?'
+
+    months_match = re.search(months_pattern, complement_lower)
+    if months_match:
+        months = int(months_match.group(1))
+        return date_debut + relativedelta(months=months) if date_debut else None
+
+    weeks_match = re.search(weeks_pattern, complement_lower)
+    if weeks_match:
+        weeks = int(weeks_match.group(1))
+        return date_debut + relativedelta(weeks=weeks) if date_debut else None
+
+    days_match = re.search(days_pattern, complement_lower)
+    if days_match:
+        days = int(days_match.group(1))
+        return date_debut + relativedelta(days=days) if date_debut else None
+
+    # Default to 2 months
+    return date_debut + relativedelta(months=DELAY_RECOVERY) if date_debut else None
