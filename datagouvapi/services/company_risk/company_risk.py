@@ -1,7 +1,7 @@
 import json
+import logging
 import re
 from datetime import date, datetime
-from locale import getlocale
 from typing import Optional, Union
 
 import requests
@@ -26,7 +26,7 @@ from datagouvapi.services.company_risk.models import (
     SirenIndex,
 )
 from datagouvapi.tools.helpers import unaccent, merge_gouv_data
-import logging
+
 logger = logging.getLogger(__name__)
 
 from datagouvapi.tools.models import GouvSearchResult
@@ -114,7 +114,7 @@ class CompanyRiskClient(GouvApiClient):
             return None
 
         date_fin = (
-            _parse_date_fin_from_complement(date_debut=date_debut,raw_data=item)
+            parse_date_fin_from_complement(date_debut=date_debut, complement_jugement=raw_complement)
             if current_judgment == JudgmentEnum.REDRESSEMENT
             else None
         )
@@ -212,7 +212,7 @@ class CompanyRiskClient(GouvApiClient):
         return merge_gouv_data(_raw_data)
 
 
-def _parse_date_fin_from_complement(complement_jugement: str, date_debut: date) -> Optional[date]:
+def parse_date_fin_from_complement(complement_jugement: str, date_debut: date) -> Optional[date]:
     """
     Parse the complementJugement field to extract a custom duration for redressement.
 

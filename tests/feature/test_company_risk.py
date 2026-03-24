@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from datagouvapi.services.company_risk.company_risk import CompanyRiskClient, _parse_date_fin_from_complement
+from datagouvapi.services.company_risk.company_risk import CompanyRiskClient, parse_date_fin_from_complement
 from datagouvapi.services.company_risk.constants import BATCH_SIZE_ERROR, DELAY_RECOVERY
 from datagouvapi.services.company_risk.models import JudgmentEnum
 
@@ -223,7 +223,7 @@ def test_parse_date_fin_from_complement_with_months():
 
     date_debut = datetime.date(2024, 1, 15)
 
-    result = _parse_date_fin_from_complement(
+    result = parse_date_fin_from_complement(
         complement_jugement="période d'observation de 6 mois",
         date_debut=date_debut
     )
@@ -234,7 +234,7 @@ def test_parse_date_fin_from_complement_with_weeks():
 
     date_debut = datetime.date(2024, 1, 15)
 
-    result = _parse_date_fin_from_complement(
+    result = parse_date_fin_from_complement(
         complement_jugement="période d'observation de 4 semaines",
         date_debut=date_debut
     )
@@ -245,7 +245,7 @@ def test_parse_date_fin_from_complement_with_days():
 
     date_debut = datetime.date(2024, 1, 15)
 
-    result = _parse_date_fin_from_complement(
+    result = parse_date_fin_from_complement(
         complement_jugement="délai de 30 jours",
         date_debut=date_debut
     )
@@ -258,7 +258,7 @@ def test_parse_date_fin_from_complement_empty_returns_default():
     date_debut = datetime.date(2024, 1, 15)
     expected = date_debut + datetime.timedelta(days=DELAY_RECOVERY * 30)
 
-    result = _parse_date_fin_from_complement(
+    result = parse_date_fin_from_complement(
         complement_jugement="",
         date_debut=date_debut
     )
@@ -269,7 +269,7 @@ def test_parse_date_fin_from_complement_no_duration_returns_default():
     date_debut = datetime.date(2024, 1, 15)
     expected = date_debut + datetime.timedelta(days=DELAY_RECOVERY * 30)
 
-    result = _parse_date_fin_from_complement(
+    result = parse_date_fin_from_complement(
         complement_jugement="jugement d'ouverture",
         date_debut=date_debut
     )
@@ -278,7 +278,7 @@ def test_parse_date_fin_from_complement_no_duration_returns_default():
 
 def test_parse_date_fin_from_complement_none_date_debut():
 
-    result = _parse_date_fin_from_complement(
+    result = parse_date_fin_from_complement(
         complement_jugement="période d'observation de 6 mois",
         date_debut=None
     )
