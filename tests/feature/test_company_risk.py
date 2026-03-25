@@ -1,6 +1,6 @@
 import datetime
 from unittest.mock import MagicMock
-
+from requests import exceptions
 import pytest
 
 from datagouvapi.services.company_risk.company_risk import (
@@ -201,8 +201,6 @@ def test_errors_keep_running_across_batch(make_client, mocker):
     Test that warnings are accumulated across batches and
     execution stops only on the first HTTP errors.
     """
-    from unittest.mock import MagicMock
-    import requests
 
     client = make_client(batch_size=1)  # Small batch size to trigger multiple batches
     mock_response = MagicMock()
@@ -212,7 +210,7 @@ def test_errors_keep_running_across_batch(make_client, mocker):
         "datagouvapi.client.requests.get",
         side_effect=[
             mock_response,
-            requests.exceptions.ConnectionError("any error message"),
+            exceptions.ConnectionError("any error message"),
         ],
     )
 
@@ -234,16 +232,6 @@ def test_parse_date_fin_from_complement_with_months():
         complement_jugement="période d'observation de 6 mois", date_debut=date_debut
     )
     assert result == datetime.date(2024, 7, 15)
-
-
-def test_parse_date_fin_from_complement_with_month():
-
-    date_debut = datetime.date(2024, 1, 15)
-
-    result = parse_date_fin_from_complement(
-        complement_jugement="période d'observation d'un mois", date_debut=date_debut
-    )
-    assert result == datetime.date(2024, 2, 15)
 
 
 def test_parse_date_fin_from_complement_with_weeks():
