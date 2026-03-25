@@ -18,7 +18,7 @@ def _make_result():
 @pytest.fixture
 def client():
     return GouvApiClient(
-        api_url="https://api.example.com", locale_name="fr_FR.UTF-8", api_key="test"
+        api_url="https://api.example.com", api_key="test"
     )
 
 

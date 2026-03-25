@@ -3,11 +3,10 @@ from datagouvapi.services.holidays.constants import API_SERVICE, API_URL, API_DA
 
 
 class HolidaysClient(GouvApiClient):
-    def __init__(self, api_key=None, locale_name=None):
+    def __init__(self, api_key=None):
         super().__init__(
             service=API_SERVICE,
             api_url=API_URL,
             dataset_id=API_DATASET_ID,
-            api_key=api_key,
-            locale_name=locale_name,
+            api_key=api_key
         )

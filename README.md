@@ -22,7 +22,6 @@ This API will look for entities under reorganization and liquidation court judgm
             siren_registry = ['123456789'] # or {'123456789': 123}
             api = CompanyRiskClient(
               all_identifiers=siren_registry,
-              locale_name=None,
               filter_start_date=None
               api_key=None,
             )
