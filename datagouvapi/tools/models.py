@@ -9,4 +9,3 @@ class GouvSearchError(TypedDict):
 class GouvSearchResult(TypedDict):
     total_count: int
     results: list[dict[str, str]]
-

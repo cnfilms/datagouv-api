@@ -18,10 +18,12 @@ class GouvApiClient:
 
     TIMEOUT = 15
 
-    def __init__(self, api_url: str, locale_name="fr_FR.UTF-8", api_key: Optional[str] = None):
+    def __init__(
+        self, api_url: str, locale_name="fr_FR.UTF-8", api_key: Optional[str] = None
+    ):
         self.api_url = api_url
-        self.errors = []
-        self.warnings = []
+        self.errors: list[GouvSearchError] = []
+        self.warnings: list[GouvApiWarning] = []
         self.api_key = api_key
         self.locale = locale_name
         self._set_locale()

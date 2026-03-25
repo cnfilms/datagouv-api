@@ -3,7 +3,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from datagouvapi.services.company_risk.company_risk import CompanyRiskClient, parse_date_fin_from_complement
+from datagouvapi.services.company_risk.company_risk import (
+    CompanyRiskClient,
+    parse_date_fin_from_complement,
+)
 from datagouvapi.services.company_risk.constants import BATCH_SIZE_ERROR, DELAY_RECOVERY
 from datagouvapi.services.company_risk.models import JudgmentEnum
 
@@ -73,7 +76,6 @@ MOCK_UNPROCESSABLE_JUDGEMENT = {
             "id": "4436T3",
             "jugement": '{"famille": "Jugement d\'ouverture", "nature": "Jugement d\'ouverture", "date": "2018-10-05", "complementJugement": "Jugement d\'ouverture des opérations de la démarche judiciaire", "type": "initial"}',
             "registre": ["422 734 970", "422734970"],
-
         },
     ],
 }
@@ -94,27 +96,26 @@ MOCK_GOUV_DATA = {
             "registre": ["422 734 970", "422734970"],
         },
     ],
-
 }
 
 
 @pytest.fixture
 def make_client():
-    def _make(identifiers=MOCK_IDENTIFIERS,
-              filter_start_date=datetime.datetime.strptime("2017-01-02", '%Y-%m-%d'), **kwargs):
+    def _make(
+        identifiers=MOCK_IDENTIFIERS,
+        filter_start_date=datetime.datetime.strptime("2017-01-02", "%Y-%m-%d"),
+        **kwargs,
+    ):
         return CompanyRiskClient(
-            all_identifiers=identifiers,
-            filter_start_date=filter_start_date,
-            **kwargs
+            all_identifiers=identifiers, filter_start_date=filter_start_date, **kwargs
         )
+
     return _make
 
 
 def test_get_processed_risky_companies(make_client, mocker):
     client = make_client()
-    mocker.patch.object(
-        client, "get_risky_companies", return_value=MOCK_MERGED_DATA
-    )
+    mocker.patch.object(client, "get_risky_companies", return_value=MOCK_MERGED_DATA)
 
     result = client.get_processed_risky_companies()
 
@@ -134,12 +135,16 @@ def test_get_processed_error_risky_companies(make_client, mocker):
     result = client.get_processed_risky_companies()
 
     warning = client.warnings[0]
-    assert str(warning) == 'Record id 4436T3 raised an error: Mandatory registre property is missing'
+    assert (
+        str(warning)
+        == "Record id 4436T3 raised an error: Mandatory registre property is missing"
+    )
     assert len(result) == 1
     sirens = [siren for siren in result.keys()]
     assert 45 in sirens
     procedure = result[45][0]
-    assert JudgmentEnum.LIQUIDATION == procedure.get('judgment')
+    assert JudgmentEnum.LIQUIDATION == procedure.get("judgment")
+
 
 def test_canot_process_judgement(make_client, mocker):
     client = make_client()
@@ -150,37 +155,36 @@ def test_canot_process_judgement(make_client, mocker):
     client.get_processed_risky_companies()
 
     warning = client.warnings[0]
-    assert str(warning) == "Record id 4436T3 raised an error: Cannot process judgment of Jugement d\'ouverture"
+    assert (
+        str(warning)
+        == "Record id 4436T3 raised an error: Cannot process judgment of Jugement d'ouverture"
+    )
 
 
 def test_get_processed_risky_companies_without_custom_identifiers(make_client, mocker):
     client = make_client(MOCK_SIRENS_ONLY)
-    mocker.patch.object(
-        client, "get_risky_companies", return_value=MOCK_MERGED_DATA
-    )
+    mocker.patch.object(client, "get_risky_companies", return_value=MOCK_MERGED_DATA)
 
     result = client.get_processed_risky_companies()
 
     sirens = [p for p in result.keys()]
-    assert all(s in MOCK_SIRENS_ONLY for s in sirens )
+    assert all(s in MOCK_SIRENS_ONLY for s in sirens)
+
 
 def test_get_processed_risky_companies_with_sirets(make_client, mocker):
     """Sans identifiers, retourne une list"""
     client = make_client(MOCK_SIRETS_AS_IDENTIFIERS)
-    mocker.patch.object(
-        client, "get_risky_companies", return_value=MOCK_GOUV_DATA
-    )
+    mocker.patch.object(client, "get_risky_companies", return_value=MOCK_GOUV_DATA)
 
     result = client.get_processed_risky_companies()
 
     ids = [p for p in result.keys()]
     assert "8975723760004" in ids
 
+
 def test_batch_size_at_limit(make_client, mocker):
     client = make_client(batch_size=140)
-    mocker.patch.object(
-        client, "get_risky_companies", return_value=MOCK_GOUV_DATA
-    )
+    mocker.patch.object(client, "get_risky_companies", return_value=MOCK_GOUV_DATA)
     assert client.batch_size == 140
     assert client.params is not None
 
@@ -191,10 +195,11 @@ def test_batch_size_over_limit(make_client):
 
     assert BATCH_SIZE_ERROR in str(exc_info.value)
 
+
 def test_errors_keep_running_across_batch(make_client, mocker):
     """
-        Test that warnings are accumulated across batches and
-        execution stops only on the first HTTP errors.
+    Test that warnings are accumulated across batches and
+    execution stops only on the first HTTP errors.
     """
     from unittest.mock import MagicMock
     import requests
@@ -202,32 +207,43 @@ def test_errors_keep_running_across_batch(make_client, mocker):
     client = make_client(batch_size=1)  # Small batch size to trigger multiple batches
     mock_response = MagicMock()
     mock_response.json.return_value = MOCK_FAULTY_MERGED_DATA
-    
-    mocker.patch('datagouvapi.client.requests.get', side_effect=[
-        mock_response,
-        requests.exceptions.ConnectionError("any error message")
-    ])
-    
+
+    mocker.patch(
+        "datagouvapi.client.requests.get",
+        side_effect=[
+            mock_response,
+            requests.exceptions.ConnectionError("any error message"),
+        ],
+    )
+
     result = client.get_processed_risky_companies()
 
     assert len(client.warnings) == 1
     assert "registre" in client.warnings[0].message
     assert len(result) == 1
     assert len(client.errors) == 1
-    assert 'refine' in client.errors[0]['params']
-    assert 'any error message' in client.errors[0]['message']
+    assert "refine" in client.errors[0]["params"]
+    assert "any error message" in client.errors[0]["message"]
 
 
 def test_parse_date_fin_from_complement_with_months():
 
+    date_debut = datetime.date(2024, 1, 15)
+
+    result = parse_date_fin_from_complement(
+        complement_jugement="période d'observation de 6 mois", date_debut=date_debut
+    )
+    assert result == datetime.date(2024, 7, 15)
+
+
+def test_parse_date_fin_from_complement_with_month():
 
     date_debut = datetime.date(2024, 1, 15)
 
     result = parse_date_fin_from_complement(
-        complement_jugement="période d'observation de 6 mois",
-        date_debut=date_debut
+        complement_jugement="période d'observation d'un mois", date_debut=date_debut
     )
-    assert result == datetime.date(2024, 7, 15)
+    assert result == datetime.date(2024, 2, 15)
 
 
 def test_parse_date_fin_from_complement_with_weeks():
@@ -235,8 +251,7 @@ def test_parse_date_fin_from_complement_with_weeks():
     date_debut = datetime.date(2024, 1, 15)
 
     result = parse_date_fin_from_complement(
-        complement_jugement="période d'observation de 4 semaines",
-        date_debut=date_debut
+        complement_jugement="période d'observation de 4 semaines", date_debut=date_debut
     )
     assert result == datetime.date(2024, 2, 12)
 
@@ -246,21 +261,18 @@ def test_parse_date_fin_from_complement_with_days():
     date_debut = datetime.date(2024, 1, 15)
 
     result = parse_date_fin_from_complement(
-        complement_jugement="délai de 30 jours",
-        date_debut=date_debut
+        complement_jugement="délai de 30 jours", date_debut=date_debut
     )
     assert result == datetime.date(2024, 2, 14)
 
 
 def test_parse_date_fin_from_complement_empty_returns_default():
 
-
     date_debut = datetime.date(2024, 1, 15)
     expected = date_debut + datetime.timedelta(days=DELAY_RECOVERY * 30)
 
     result = parse_date_fin_from_complement(
-        complement_jugement="",
-        date_debut=date_debut
+        complement_jugement="", date_debut=date_debut
     )
     assert result == expected
 
@@ -270,8 +282,7 @@ def test_parse_date_fin_from_complement_no_duration_returns_default():
     expected = date_debut + datetime.timedelta(days=DELAY_RECOVERY * 30)
 
     result = parse_date_fin_from_complement(
-        complement_jugement="jugement d'ouverture",
-        date_debut=date_debut
+        complement_jugement="jugement d'ouverture", date_debut=date_debut
     )
     assert result == expected
 
@@ -279,8 +290,6 @@ def test_parse_date_fin_from_complement_no_duration_returns_default():
 def test_parse_date_fin_from_complement_none_date_debut():
 
     result = parse_date_fin_from_complement(
-        complement_jugement="période d'observation de 6 mois",
-        date_debut=None
+        complement_jugement="période d'observation de 6 mois", date_debut=None
     )
     assert result is None
-

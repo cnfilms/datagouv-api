@@ -14,7 +14,7 @@ class GouvApiException(Exception):
 
 
 class GouvApiWarning:
-    def __init__(self, identifier, message):
+    def __init__(self, identifier: str, message: str):
         self.identifier = identifier
         self.message = message
 
@@ -41,4 +41,3 @@ def merge_gouv_data(raw_data: list[dict[str, Any]]) -> GouvSearchResult:
         results.extend(data["results"])
 
     return GouvSearchResult(total_count=total_count, results=results)
-

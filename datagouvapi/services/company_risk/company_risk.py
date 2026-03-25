@@ -57,7 +57,7 @@ class CompanyRiskClient(GouvApiClient):
         self.identifiers = all_identifiers
         self.siren_list = (
             list(self.identifiers.keys())
-            if isinstance(self.identifiers, dict) # implicitely SirenIndex
+            if isinstance(self.identifiers, dict)  # implicitely SirenIndex
             else self.identifiers
         )
         self.filter_start_date = filter_start_date
@@ -77,7 +77,7 @@ class CompanyRiskClient(GouvApiClient):
         return clause
 
     def _build_company_judgment(
-        self, item: dict, siren: Siren, identifier: Optional[Identifier]
+        self, item: dict[str, str], siren: Siren, identifier: Optional[Identifier]
     ) -> Optional[CompanyJudgment]:
         """
             Resolve the response from BODACC-api into a CompanyJudgment dict.
@@ -85,8 +85,8 @@ class CompanyRiskClient(GouvApiClient):
         :param siren: SIREN of the company
         :param identifier: Optional, custom identifier for the company.
         """
-        record_id = item.get("id")
-        if not (raw_jugement := json.loads(item.get("jugement"))):
+        record_id = item["id"]
+        if not (raw_jugement := json.loads(item["jugement"])):
             return None
         raw_complement = raw_jugement.get("complementJugement")
         raw_nature = raw_jugement.get("nature")
@@ -102,10 +102,8 @@ class CompanyRiskClient(GouvApiClient):
             self._add_warning(record_id, f"Cannot process judgment of {raw_nature}")
             return None
 
-        if not (record_date := self.resolve_date(item.get("dateparution"))):
-            self._add_warning(
-                record_id, f"Cannot process date: {item.get('dateparution')}"
-            )
+        if not (record_date := self.resolve_date(item["dateparution"])):
+            self._add_warning(record_id, f"Cannot process date: {item['dateparution']}")
             return None
 
         date_debut = self.resolve_date(raw_date)
@@ -114,7 +112,9 @@ class CompanyRiskClient(GouvApiClient):
             return None
 
         date_fin = (
-            parse_date_fin_from_complement(date_debut=date_debut, complement_jugement=raw_complement)
+            parse_date_fin_from_complement(
+                date_debut=date_debut, complement_jugement=raw_complement
+            )
             if current_judgment == JudgmentEnum.REDRESSEMENT
             else None
         )
@@ -122,7 +122,7 @@ class CompanyRiskClient(GouvApiClient):
         return CompanyJudgment(
             siren=siren,
             identifier=identifier,
-            record_id=item.get("id", None),
+            record_id=record_id,
             date=record_date,
             raw_data=raw_jugement,
             judgment=current_judgment,
@@ -135,19 +135,22 @@ class CompanyRiskClient(GouvApiClient):
             Map a risk judgment for each company.
         :return: A registry mapping the SIREN or custom ID to its list of recovery and bankrupt court judgments.
         """
-        parsed_douteux = dict()
+        parsed_douteux: dict[Identifier, list[CompanyJudgment]] = dict()
 
         for item in self.get_risky_companies().get("results", []):
             if missing_field := next(
-                (field for field in MANDATORY_FIELDS if not item.get(field)),
-                None
+                (field for field in MANDATORY_FIELDS if not item.get(field)), None
             ):
                 self._add_warning(
-                    item.get("id"), f"Mandatory {missing_field} property is missing"
+                    item["id"], f"Mandatory {missing_field} property is missing"
                 )
                 continue
 
-            if not (siren := next((s for s in self.siren_list if s in item.get('registre')), None)):
+            if not (
+                siren := next(
+                    (s for s in self.siren_list if s in item["registre"]), None
+                )
+            ):
                 continue
             identifier = (
                 self.identifiers.get(siren, siren)
@@ -158,7 +161,7 @@ class CompanyRiskClient(GouvApiClient):
             if not (
                 judgement_obj := self._build_company_judgment(item, siren, identifier)
             ):
-                self._add_warning(item.get("id"), "Judgement cannot be processed")
+                self._add_warning(item["id"], "Judgement cannot be processed")
                 continue
 
             if identifier not in parsed_douteux:
@@ -205,14 +208,16 @@ class CompanyRiskClient(GouvApiClient):
             try:
                 batch_douteux = self.get_data(params=self.params)
             except requests.exceptions.RequestException as e:
-                self._add_error(str(e), self.params)
+                self._add_error(str(e), str(self.params))
                 logging.error(str(e))
                 break
             _raw_data.append(batch_douteux)
         return merge_gouv_data(_raw_data)
 
 
-def parse_date_fin_from_complement(complement_jugement: str, date_debut: date) -> Optional[date]:
+def parse_date_fin_from_complement(
+    complement_jugement: str, date_debut: date
+) -> Optional[date]:
     """
     Parse the complementJugement field to extract a custom duration for redressement.
 
@@ -231,9 +236,9 @@ def parse_date_fin_from_complement(complement_jugement: str, date_debut: date) -
 
     # Try to find duration patterns like "X mois", "X semaines", "X jours"
     # Pattern for months: "6 mois", "six mois", etc.
-    months_pattern = r'(\d+)\s*mois'
-    weeks_pattern = r'(\d+)\s*semaines?'
-    days_pattern = r'(\d+)\s*jours?'
+    months_pattern = r"(\d+)\s*mois"
+    weeks_pattern = r"(\d+)\s*semaines?"
+    days_pattern = r"(\d+)\s*jours?"
 
     months_match = re.search(months_pattern, complement_lower)
     if months_match:

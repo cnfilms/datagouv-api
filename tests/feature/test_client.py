@@ -50,4 +50,3 @@ def test_http_error(mock_get, client, status_code):
     with pytest.raises(requests.exceptions.HTTPError) as exc_info:
         client.get_data(params=_make_where_clause())
     assert exc_info.value.response.status_code == status_code
-

@@ -21,5 +21,4 @@ MAX_BATCH_SIZE = 140
 BATCH_SIZE_ERROR = (
     f"Batch size cannot be more than {MAX_BATCH_SIZE} ; HTTP request will be rejected"
 )
-
 DATE_FORMATS = ["%Y-%m-%d", "%d %B %Y"]
