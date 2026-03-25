@@ -39,7 +39,7 @@ MOCK_MERGED_DATA = {
         {
             "dateparution": "2019-07-21",
             "id": "4436T3",
-            "jugement": '{"famille": "Jugement de clôture", "nature": "Jugement de clôture pour insuffisance d\'actif", "date": "6 mai 2011", "complementJugement": "Jugement prononçant la liquidation judiciaire", "type": "initial"}',
+            "jugement": '{"famille": "Jugement de clôture", "nature": "Jugement de clôture pour insuffisance d\'actif", "date": "6 may 2011", "complementJugement": "Jugement prononçant la liquidation judiciaire", "type": "initial"}',
             "registre": ["897 572 376", "897572376"],
         },
         {
@@ -86,7 +86,7 @@ MOCK_GOUV_DATA = {
         {
             "dateparution": "2019-07-21",
             "id": "4436T3",
-            "jugement": '{"famille": "Jugement de clôture", "nature": "Jugement de clôture pour insuffisance d\'actif", "date": "6 mai 2011", "complementJugement": "Jugement prononçant la liquidation judiciaire", "type": "initial"}',
+            "jugement": '{"famille": "Jugement de clôture", "nature": "Jugement de clôture pour insuffisance d\'actif", "date": "6 june 2011", "complementJugement": "Jugement prononçant la liquidation judiciaire", "type": "initial"}',
             "registre": ["897 572 376", "897572376"],
         },
         {

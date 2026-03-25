@@ -8,5 +8,5 @@ class HolidaysClient(GouvApiClient):
             service=API_SERVICE,
             api_url=API_URL,
             dataset_id=API_DATASET_ID,
-            api_key=api_key
+            api_key=api_key,
         )

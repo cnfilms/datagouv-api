@@ -17,9 +17,7 @@ def _make_result():
 
 @pytest.fixture
 def client():
-    return GouvApiClient(
-        api_url="https://api.example.com", api_key="test"
-    )
+    return GouvApiClient(api_url="https://api.example.com", api_key="test")
 
 
 @patch("datagouvapi.client.requests.get")

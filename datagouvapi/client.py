@@ -16,9 +16,7 @@ class GouvApiClient:
 
     TIMEOUT = 15
 
-    def __init__(
-        self, api_url: str, api_key: Optional[str] = None
-    ):
+    def __init__(self, api_url: str, api_key: Optional[str] = None):
         self.api_url = api_url
         self.errors: list[GouvSearchError] = []
         self.warnings: list[GouvApiWarning] = []
