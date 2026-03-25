@@ -1,5 +1,5 @@
 [project]
-name = "datagouvapi"
+name = "datagouv-api"
 version = "1.0.0"
 description = "French Gouv Opendata API client"
 keywords = ["opendata", "gouv", "data.gouv.fr", "bodacc", "calendrier-scolaire"]
