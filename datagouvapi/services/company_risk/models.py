@@ -4,7 +4,7 @@ from enum import Enum
 from typing import TypedDict, Union, Optional
 
 
-class JudgmentEnum(Enum):
+class JudgmentEnum(str, Enum):
     """Nature of court judgment of a company
     French wording is kept to avoid miscomprehension of Bodacc publications
     """
