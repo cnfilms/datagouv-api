@@ -4,7 +4,7 @@
 [![pypi](https://img.shields.io/pypi/v/datagouv-api.svg)](https://pypi.org/project/datagouv-api/)
 
 
-# data-gouv-api
+# datagouv-api
 
 ## French Gouv Opendata API clients
     

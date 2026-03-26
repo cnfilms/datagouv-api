@@ -9,7 +9,7 @@ authors = [
     { name = "CNFilms", email = "technique@cinego.net" }
 ]
 dependencies = [
-    "requests>=2.31",
+    "requests>=2.25",
     "python-dateutil>=2.8",
 ]
 
