@@ -229,7 +229,8 @@ def test_parse_date_fin_from_complement_with_months():
     date_parution = datetime.date(2024, 1, 15)
 
     result = parse_date_fin_from_complement(
-        complement_jugement="période d'observation de 6 mois", date_parution=date_parution
+        complement_jugement="période d'observation de 6 mois",
+        date_parution=date_parution,
     )
     assert result == datetime.date(2024, 7, 15)
 
@@ -239,7 +240,8 @@ def test_parse_date_fin_from_complement_with_weeks():
     date_parution = datetime.date(2024, 1, 15)
 
     result = parse_date_fin_from_complement(
-        complement_jugement="période d'observation de 4 semaines", date_parution=date_parution
+        complement_jugement="période d'observation de 4 semaines",
+        date_parution=date_parution,
     )
     assert result == datetime.date(2024, 2, 12)
 
@@ -287,15 +289,17 @@ def test_parse_date_fin_from_complement_delai_as_text():
     date_parution = datetime.date(2024, 1, 15)
 
     result = parse_date_fin_from_complement(
-        complement_jugement="période d'observation de deux mois", date_parution=date_parution
+        complement_jugement="période d'observation de deux mois",
+        date_parution=date_parution,
     )
-    assert result == datetime.date(2024, 3, 14)
+    assert result == datetime.date(2024, 3, 15)
 
 
 def test_parse_date_fin_from_complement_delai_as_text_bis():
     date_parution = datetime.date(2024, 1, 15)
 
     result = parse_date_fin_from_complement(
-        complement_jugement="période d'observation d'un mois", date_parution=date_parution
+        complement_jugement="période d'observation d'un mois",
+        date_parution=date_parution,
     )
     assert result == datetime.date(2024, 2, 15)
