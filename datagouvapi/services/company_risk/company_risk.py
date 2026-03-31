@@ -6,6 +6,7 @@ from typing import Optional, Union
 
 import requests
 from dateutil.relativedelta import relativedelta
+from text_to_num import alpha2digit
 
 from datagouvapi.client import GouvApiClient
 from datagouvapi.services.company_risk.constants import (
@@ -106,14 +107,9 @@ class CompanyRiskClient(GouvApiClient):
             self._add_warning(record_id, f"Cannot process date: {item['dateparution']}")
             return None
 
-        date_debut = self.resolve_date(raw_date)
-        if not date_debut:
-            self._add_warning(record_id, f"Cannot process date: {raw_date}")
-            return None
-
         date_fin = (
             parse_date_fin_from_complement(
-                date_debut=date_debut, complement_jugement=raw_complement
+                date_parution=record_date, complement_jugement=raw_complement
             )
             if current_judgment == JudgmentEnum.REDRESSEMENT
             else None
@@ -126,7 +122,6 @@ class CompanyRiskClient(GouvApiClient):
             date=record_date,
             raw_data=raw_jugement,
             judgment=current_judgment,
-            start_date=date_debut,
             expected_end_date=date_fin,
         )
 
@@ -200,7 +195,7 @@ class CompanyRiskClient(GouvApiClient):
         :return: GouvSearchResult
         """
         _raw_data = []
-        for i in range(0, len(self.siren_list), self.batch_size):
+        for i in range(0, 500, self.batch_size):
             batch_siren_list = self.siren_list[i : i + self.batch_size]
             self.params["where"] = self._compute_where_clause(
                 batch_siren_list=batch_siren_list
@@ -216,7 +211,7 @@ class CompanyRiskClient(GouvApiClient):
 
 
 def parse_date_fin_from_complement(
-    complement_jugement: str, date_debut: date
+    complement_jugement: str, date_parution: date
 ) -> Optional[date]:
     """
     Parse the complementJugement field to extract a custom duration for redressement.
@@ -225,17 +220,17 @@ def parse_date_fin_from_complement(
     a different duration (e.g., "période d'observation de 6 mois").
 
     :param complement_jugement: The complementJugement field from Bodacc raw data
-    :param date_debut: The start date of the procedure already resolved
+    :param date_parution: The Boddac publication date
     :return: The calculated end date
     """
 
     if not complement_jugement:
-        return date_debut + relativedelta(months=DELAY_RECOVERY) if date_debut else None
+        return date_parution + relativedelta(months=DELAY_RECOVERY) if date_parution else None
 
     complement_lower = complement_jugement.lower()
+    # Pattern is usually: "6 mois", "six mois", etc.
+    complement_lower = alpha2digit(complement_lower, "fr")
 
-    # Try to find duration patterns like "X mois", "X semaines", "X jours"
-    # Pattern for months: "6 mois", "six mois", etc.
     months_pattern = r"(\d+)\s*mois"
     weeks_pattern = r"(\d+)\s*semaines?"
     days_pattern = r"(\d+)\s*jours?"
@@ -243,17 +238,17 @@ def parse_date_fin_from_complement(
     months_match = re.search(months_pattern, complement_lower)
     if months_match:
         months = int(months_match.group(1))
-        return date_debut + relativedelta(months=months) if date_debut else None
+        return date_parution + relativedelta(months=months) if date_parution else None
 
     weeks_match = re.search(weeks_pattern, complement_lower)
     if weeks_match:
         weeks = int(weeks_match.group(1))
-        return date_debut + relativedelta(weeks=weeks) if date_debut else None
+        return date_parution + relativedelta(weeks=weeks) if date_parution else None
 
     days_match = re.search(days_pattern, complement_lower)
     if days_match:
         days = int(days_match.group(1))
-        return date_debut + relativedelta(days=days) if date_debut else None
+        return date_parution + relativedelta(days=days) if date_parution else None
 
     # Default to 2 months
-    return date_debut + relativedelta(months=DELAY_RECOVERY) if date_debut else None
+    return date_parution + relativedelta(months=DELAY_RECOVERY) if date_parution else None

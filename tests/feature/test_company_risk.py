@@ -226,58 +226,76 @@ def test_errors_keep_running_across_batch(make_client, mocker):
 
 def test_parse_date_fin_from_complement_with_months():
 
-    date_debut = datetime.date(2024, 1, 15)
+    date_parution = datetime.date(2024, 1, 15)
 
     result = parse_date_fin_from_complement(
-        complement_jugement="période d'observation de 6 mois", date_debut=date_debut
+        complement_jugement="période d'observation de 6 mois", date_parution=date_parution
     )
     assert result == datetime.date(2024, 7, 15)
 
 
 def test_parse_date_fin_from_complement_with_weeks():
 
-    date_debut = datetime.date(2024, 1, 15)
+    date_parution = datetime.date(2024, 1, 15)
 
     result = parse_date_fin_from_complement(
-        complement_jugement="période d'observation de 4 semaines", date_debut=date_debut
+        complement_jugement="période d'observation de 4 semaines", date_parution=date_parution
     )
     assert result == datetime.date(2024, 2, 12)
 
 
 def test_parse_date_fin_from_complement_with_days():
 
-    date_debut = datetime.date(2024, 1, 15)
+    date_parution = datetime.date(2024, 1, 15)
 
     result = parse_date_fin_from_complement(
-        complement_jugement="délai de 30 jours", date_debut=date_debut
+        complement_jugement="délai de 30 jours", date_parution=date_parution
     )
     assert result == datetime.date(2024, 2, 14)
 
 
 def test_parse_date_fin_from_complement_empty_returns_default():
 
-    date_debut = datetime.date(2024, 1, 15)
-    expected = date_debut + datetime.timedelta(days=DELAY_RECOVERY * 30)
+    date_parution = datetime.date(2024, 1, 15)
+    expected = date_parution + datetime.timedelta(days=DELAY_RECOVERY * 30)
 
     result = parse_date_fin_from_complement(
-        complement_jugement="", date_debut=date_debut
+        complement_jugement="", date_parution=date_parution
     )
     assert result == expected
 
 
 def test_parse_date_fin_from_complement_no_duration_returns_default():
-    date_debut = datetime.date(2024, 1, 15)
-    expected = date_debut + datetime.timedelta(days=DELAY_RECOVERY * 30)
+    date_parution = datetime.date(2024, 1, 15)
+    expected = date_parution + datetime.timedelta(days=DELAY_RECOVERY * 30)
 
     result = parse_date_fin_from_complement(
-        complement_jugement="jugement d'ouverture", date_debut=date_debut
+        complement_jugement="jugement d'ouverture", date_parution=date_parution
     )
     assert result == expected
 
 
-def test_parse_date_fin_from_complement_none_date_debut():
+def test_parse_date_fin_from_complement_none_date_parution():
 
     result = parse_date_fin_from_complement(
-        complement_jugement="période d'observation de 6 mois", date_debut=None
+        complement_jugement="période d'observation de 6 mois", date_parution=None
     )
     assert result is None
+
+
+def test_parse_date_fin_from_complement_delai_as_text():
+    date_parution = datetime.date(2024, 1, 15)
+
+    result = parse_date_fin_from_complement(
+        complement_jugement="période d'observation de deux mois", date_parution=date_parution
+    )
+    assert result == datetime.date(2024, 3, 14)
+
+
+def test_parse_date_fin_from_complement_delai_as_text_bis():
+    date_parution = datetime.date(2024, 1, 15)
+
+    result = parse_date_fin_from_complement(
+        complement_jugement="période d'observation d'un mois", date_parution=date_parution
+    )
+    assert result == datetime.date(2024, 2, 15)

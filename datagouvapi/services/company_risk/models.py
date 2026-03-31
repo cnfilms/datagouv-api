@@ -26,5 +26,4 @@ class CompanyJudgment(TypedDict):
     date: datetime.date
     raw_data: str
     judgment: JudgmentEnum
-    start_date: datetime.date
     expected_end_date: Optional[datetime.date]

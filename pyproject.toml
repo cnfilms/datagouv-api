@@ -11,6 +11,7 @@ authors = [
 dependencies = [
     "requests>=2.25",
     "python-dateutil>=2.8",
+    "text2num>=3.0.1",
 ]
 
 [build-system]
