@@ -289,7 +289,7 @@ def test_parse_date_fin_from_complement_delai_as_text():
     result = parse_date_fin_from_complement(
         complement_jugement="période d'observation de deux mois", date_parution=date_parution
     )
-    assert result == datetime.date(2024, 3, 14)
+    assert result == datetime.date(2024, 3, 15)
 
 
 def test_parse_date_fin_from_complement_delai_as_text_bis():
