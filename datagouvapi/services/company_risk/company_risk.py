@@ -225,7 +225,11 @@ def parse_date_fin_from_complement(
     """
 
     if not complement_jugement:
-        return date_parution + relativedelta(months=DELAY_RECOVERY) if date_parution else None
+        return (
+            date_parution + relativedelta(months=DELAY_RECOVERY)
+            if date_parution
+            else None
+        )
 
     complement_lower = complement_jugement.lower().replace("'", " ")
     # Pattern is usually: "6 mois", "six mois", etc.
@@ -251,4 +255,6 @@ def parse_date_fin_from_complement(
         return date_parution + relativedelta(days=days) if date_parution else None
 
     # Default to 2 months
-    return date_parution + relativedelta(months=DELAY_RECOVERY) if date_parution else None
+    return (
+        date_parution + relativedelta(months=DELAY_RECOVERY) if date_parution else None
+    )
