@@ -6,7 +6,7 @@ from typing import Optional, Union
 
 import requests
 from dateutil.relativedelta import relativedelta
-from text_to_num import alpha2digit
+from text_to_num import alpha2digit # type: ignore[import]
 
 from datagouvapi.client import GouvApiClient
 from datagouvapi.services.company_risk.constants import (
