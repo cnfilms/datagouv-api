@@ -227,25 +227,25 @@ def parse_date_fin_from_complement(
     if not complement_jugement:
         return date_parution + relativedelta(months=DELAY_RECOVERY) if date_parution else None
 
-    complement_lower = complement_jugement.lower()
+    complement_lower = complement_jugement.lower().replace("'", " ")
     # Pattern is usually: "6 mois", "six mois", etc.
-    complement_lower = alpha2digit(complement_lower, "fr")
+    complement_numbers = alpha2digit(complement_lower, lang="fr", threshold=0)
 
     months_pattern = r"(\d+)\s*mois"
     weeks_pattern = r"(\d+)\s*semaines?"
     days_pattern = r"(\d+)\s*jours?"
 
-    months_match = re.search(months_pattern, complement_lower)
+    months_match = re.search(months_pattern, complement_numbers)
     if months_match:
         months = int(months_match.group(1))
         return date_parution + relativedelta(months=months) if date_parution else None
 
-    weeks_match = re.search(weeks_pattern, complement_lower)
+    weeks_match = re.search(weeks_pattern, complement_numbers)
     if weeks_match:
         weeks = int(weeks_match.group(1))
         return date_parution + relativedelta(weeks=weeks) if date_parution else None
 
-    days_match = re.search(days_pattern, complement_lower)
+    days_match = re.search(days_pattern, complement_numbers)
     if days_match:
         days = int(days_match.group(1))
         return date_parution + relativedelta(days=days) if date_parution else None
