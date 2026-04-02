@@ -1,5 +1,7 @@
 import datetime
 from unittest.mock import MagicMock
+
+from dateutil.relativedelta import relativedelta
 from requests import exceptions
 import pytest
 
@@ -259,7 +261,7 @@ def test_parse_date_fin_from_complement_with_days():
 def test_parse_date_fin_from_complement_empty_returns_default():
 
     date_parution = datetime.date(2024, 1, 15)
-    expected = date_parution + datetime.timedelta(days=DELAY_RECOVERY * 30)
+    expected = date_parution + relativedelta(months=DELAY_RECOVERY)
 
     result = parse_date_fin_from_complement(
         complement_jugement="", date_parution=date_parution
@@ -269,7 +271,7 @@ def test_parse_date_fin_from_complement_empty_returns_default():
 
 def test_parse_date_fin_from_complement_no_duration_returns_default():
     date_parution = datetime.date(2024, 1, 15)
-    expected = date_parution + datetime.timedelta(days=DELAY_RECOVERY * 30)
+    expected = date_parution + relativedelta(months=DELAY_RECOVERY)
 
     result = parse_date_fin_from_complement(
         complement_jugement="jugement d'ouverture", date_parution=date_parution
@@ -283,6 +285,15 @@ def test_parse_date_fin_from_complement_none_date_parution():
         complement_jugement="période d'observation de 6 mois", date_parution=None
     )
     assert result is None
+
+
+def test_parse_date_fin_from_complement_years():
+    date_parution = datetime.date(2024, 1, 15)
+    expected = date_parution + relativedelta(years=10)
+    result = parse_date_fin_from_complement(
+        complement_jugement=" durée du plan 10 ans", date_parution=date_parution
+    )
+    assert result == expected
 
 
 def test_parse_date_fin_from_complement_delai_as_text():
@@ -303,3 +314,66 @@ def test_parse_date_fin_from_complement_delai_as_text_bis():
         date_parution=date_parution,
     )
     assert result == datetime.date(2024, 2, 15)
+
+
+@pytest.mark.parametrize(
+    "jugement, expected",
+    [
+        ("Jugement de conversion en liquidation judiciaire", JudgmentEnum.LIQUIDATION),
+        (
+            "Jugement d'ouverture d'une procédure de redressement judiciaire",
+            JudgmentEnum.REDRESSEMENT,
+        ),
+        (
+            "Liste des créances nées après le jugement d'ouverture d'une procédure de liquidation judiciaire",
+            JudgmentEnum.LIQUIDATION,
+        ),
+        (
+            "Jugement de conversion en redressement judiciaire de la procédure de sauvegarde",
+            JudgmentEnum.REDRESSEMENT,
+        ),
+        (
+            "Jugement prononçant la résolution du plan de redressement et la liquidation judiciaire",
+            JudgmentEnum.LIQUIDATION,
+        ),
+        (
+            "Liste des créances nées après le jugement d'ouverture d'une procédure de liquidation judiciaire",
+            JudgmentEnum.LIQUIDATION,
+        ),
+        (
+            "Jugement d'ouverture d'une procédure de liquidation judiciaire",
+            JudgmentEnum.LIQUIDATION,
+        ),
+        ("Jugement prononçant la liquidation judiciaire", JudgmentEnum.LIQUIDATION),
+        ("Conversion en liquidation judiciaire", JudgmentEnum.LIQUIDATION),
+        (
+            "Jugement convertissant la procédure en redressement judiciaire",
+            JudgmentEnum.REDRESSEMENT,
+        ),
+        (
+            "Ouverture d'une procédure de redressement judiciaire",
+            JudgmentEnum.REDRESSEMENT,
+        ),
+        ("Jugement arrêtant le plan de redressement", JudgmentEnum.REDRESSEMENT),
+        ("Jugement prononçant la résolution du plan de sauvegarde", None),
+        ("Jugement d'ouverture d'une procédure de sauvegarde", None),
+        (
+            "Jugement de conversion en procédure de redressement judiciaire",
+            JudgmentEnum.REDRESSEMENT,
+        ),
+        ("Jugement de clôture pour insuffisance d'actif", None),
+        (
+            "Jugement prononçant la clôture de la liquidation judiciaire pour insuffisance d'actif",
+            JudgmentEnum.LIQUIDATION,
+        ),
+        ("Résolution du plan de continuation", JudgmentEnum.LIQUIDATION),
+        (
+            "plan de continuation adopté par jugement et a autorisé la cession ",
+            JudgmentEnum.LIQUIDATION,
+        ),
+        ("Résolution du plan de redressement", JudgmentEnum.LIQUIDATION),
+    ],
+)
+def test_resolve_judgment(jugement, expected):
+    result = CompanyRiskClient.resolve_judgment(jugement)
+    assert result == expected
