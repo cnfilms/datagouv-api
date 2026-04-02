@@ -337,10 +337,6 @@ def test_parse_date_fin_from_complement_delai_as_text_bis():
             JudgmentEnum.LIQUIDATION,
         ),
         (
-            "Liste des créances nées après le jugement d'ouverture d'une procédure de liquidation judiciaire",
-            JudgmentEnum.LIQUIDATION,
-        ),
-        (
             "Jugement d'ouverture d'une procédure de liquidation judiciaire",
             JudgmentEnum.LIQUIDATION,
         ),

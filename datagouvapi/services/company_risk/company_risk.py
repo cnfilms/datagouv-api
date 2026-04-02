@@ -182,8 +182,7 @@ class CompanyRiskClient(GouvApiClient):
     @classmethod
     def resolve_judgment(cls, jugement: str) -> Optional[JudgmentEnum]:
         jugement = unaccent(jugement).lower()
-        if "créances" in jugement:
-            return None
+
         if any(word in jugement for word in ("annulation", "infirmation")):
             return JudgmentEnum.ANNULEE
 
