@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools<82"] # pkg_resources.iter_entry_points() changed in v82 and refrain pycharm debug mode usage
 build-backend = "setuptools.build_meta"
 
 [tool.coverage.report]
@@ -38,4 +38,5 @@ dev = [
     "ruff>=0.3",
     "types-requests>=2.32.4.20260107",
     "types-python-dateutil>=2.9.0.20260124",
+    "setuptools<82"
 ]

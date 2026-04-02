@@ -71,10 +71,12 @@ class CompanyRiskClient(GouvApiClient):
         clause = f"registre IN ({sirens_quoted}) and {BASE_WHERE_CLAUSE}"
         if self.filter_start_date:
             clause += (
-                f"and dateparution >= {self.filter_start_date.strftime('%Y-%m-%d')}"
+                f"and dateparution >= '{self.filter_start_date.strftime('%Y-%m-%d')}'"
             )
         if self.filter_end_date:
-            clause += f"and dateparution <= {self.filter_end_date.strftime('%Y-%m-%d')}"
+            clause += (
+                f"and dateparution <= '{self.filter_end_date.strftime('%Y-%m-%d')}'"
+            )
         return clause
 
     def _build_company_judgment(
@@ -180,12 +182,21 @@ class CompanyRiskClient(GouvApiClient):
     @classmethod
     def resolve_judgment(cls, jugement: str) -> Optional[JudgmentEnum]:
         jugement = unaccent(jugement).lower()
-        if any(j in jugement for j in ["liquidation", "conversion"]):
-            return JudgmentEnum.LIQUIDATION
-        if "redressement" in jugement:
-            return JudgmentEnum.REDRESSEMENT
+
         if any(word in jugement for word in ("annulation", "infirmation")):
             return JudgmentEnum.ANNULEE
+
+        if any(word in jugement for word in ("liquidation", "cession")):
+            return JudgmentEnum.LIQUIDATION
+
+        if "resolution" in jugement and any(
+            word in jugement for word in ("redressement", "continuation")
+        ):
+            return JudgmentEnum.LIQUIDATION
+
+        if any(word in jugement for word in ("redressement", "continuation")):
+            return JudgmentEnum.REDRESSEMENT
+
         return None
 
     def get_risky_companies(self) -> GouvSearchResult:
@@ -235,9 +246,15 @@ def parse_date_fin_from_complement(
     # Pattern is usually: "6 mois", "six mois", etc.
     complement_numbers = alpha2digit(complement_lower, lang="fr", threshold=0)
 
+    years_pattern = r"(\d+)\s*ans?"
     months_pattern = r"(\d+)\s*mois"
     weeks_pattern = r"(\d+)\s*semaines?"
     days_pattern = r"(\d+)\s*jours?"
+
+    year_match = re.search(years_pattern, complement_numbers)
+    if year_match:
+        years = int(year_match.group(1))
+        return date_parution + relativedelta(years=years) if date_parution else None
 
     months_match = re.search(months_pattern, complement_numbers)
     if months_match:
