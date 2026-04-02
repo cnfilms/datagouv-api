@@ -190,7 +190,7 @@ class CompanyRiskClient(GouvApiClient):
             return JudgmentEnum.LIQUIDATION
 
         if "resolution" in jugement and any(
-            w in jugement for w in ("redressement", "continuation")
+            word in jugement for word in ("redressement", "continuation")
         ):
             return JudgmentEnum.LIQUIDATION
 
