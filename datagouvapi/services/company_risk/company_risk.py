@@ -206,7 +206,7 @@ class CompanyRiskClient(GouvApiClient):
         :return: GouvSearchResult
         """
         _raw_data = []
-        for i in range(0, self.siren_list, self.batch_size):
+        for i in range(0, len(self.siren_list), self.batch_size):
             batch_siren_list = self.siren_list[i : i + self.batch_size]
             self.params["where"] = self._compute_where_clause(
                 batch_siren_list=batch_siren_list
