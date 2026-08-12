@@ -1,16 +1,14 @@
 import datetime
 from unittest.mock import MagicMock
 
-from dateutil.relativedelta import relativedelta
-from requests import exceptions
 import pytest
+from requests import exceptions
 
 from datagouvapi.services.company_risk.company_risk import (
     CompanyRiskClient,
-    parse_date_fin_from_complement,
 )
-from datagouvapi.services.company_risk.constants import BATCH_SIZE_ERROR, DELAY_RECOVERY
-from datagouvapi.services.company_risk.models import JudgmentEnum
+from datagouvapi.services.company_risk.constants import BATCH_SIZE_ERROR
+from datagouvapi.services.company_risk.models import JudgmentStatusEnum
 
 MOCK_IDENTIFIERS = {
     "735580060": 2,
@@ -145,7 +143,7 @@ def test_get_processed_error_risky_companies(make_client, mocker):
     sirens = [siren for siren in result.keys()]
     assert 45 in sirens
     procedure = result[45][0]
-    assert JudgmentEnum.LIQUIDATION == procedure.get("judgment")
+    assert JudgmentStatusEnum.LIQUIDATION == procedure.get("judgment_status")
 
 
 def test_canot_process_judgement(make_client, mocker):
@@ -226,150 +224,52 @@ def test_errors_keep_running_across_batch(make_client, mocker):
     assert "any error message" in client.errors[0]["message"]
 
 
-def test_parse_date_fin_from_complement_with_months():
-
-    date_parution = datetime.date(2024, 1, 15)
-
-    result = parse_date_fin_from_complement(
-        complement_jugement="période d'observation de 6 mois",
-        date_parution=date_parution,
-    )
-    assert result == datetime.date(2024, 7, 15)
-
-
-def test_parse_date_fin_from_complement_with_weeks():
-
-    date_parution = datetime.date(2024, 1, 15)
-
-    result = parse_date_fin_from_complement(
-        complement_jugement="période d'observation de 4 semaines",
-        date_parution=date_parution,
-    )
-    assert result == datetime.date(2024, 2, 12)
-
-
-def test_parse_date_fin_from_complement_with_days():
-
-    date_parution = datetime.date(2024, 1, 15)
-
-    result = parse_date_fin_from_complement(
-        complement_jugement="délai de 30 jours", date_parution=date_parution
-    )
-    assert result == datetime.date(2024, 2, 14)
-
-
-def test_parse_date_fin_from_complement_empty_returns_default():
-
-    date_parution = datetime.date(2024, 1, 15)
-    expected = date_parution + relativedelta(months=DELAY_RECOVERY)
-
-    result = parse_date_fin_from_complement(
-        complement_jugement="", date_parution=date_parution
-    )
-    assert result == expected
-
-
-def test_parse_date_fin_from_complement_no_duration_returns_default():
-    date_parution = datetime.date(2024, 1, 15)
-    expected = date_parution + relativedelta(months=DELAY_RECOVERY)
-
-    result = parse_date_fin_from_complement(
-        complement_jugement="jugement d'ouverture", date_parution=date_parution
-    )
-    assert result == expected
-
-
-def test_parse_date_fin_from_complement_none_date_parution():
-
-    result = parse_date_fin_from_complement(
-        complement_jugement="période d'observation de 6 mois", date_parution=None
-    )
-    assert result is None
-
-
-def test_parse_date_fin_from_complement_years():
-    date_parution = datetime.date(2024, 1, 15)
-    expected = date_parution + relativedelta(years=10)
-    result = parse_date_fin_from_complement(
-        complement_jugement=" durée du plan 10 ans", date_parution=date_parution
-    )
-    assert result == expected
-
-
-def test_parse_date_fin_from_complement_delai_as_text():
-    date_parution = datetime.date(2024, 1, 15)
-
-    result = parse_date_fin_from_complement(
-        complement_jugement="période d'observation de deux mois",
-        date_parution=date_parution,
-    )
-    assert result == datetime.date(2024, 3, 15)
-
-
-def test_parse_date_fin_from_complement_delai_as_text_bis():
-    date_parution = datetime.date(2024, 1, 15)
-
-    result = parse_date_fin_from_complement(
-        complement_jugement="période d'observation d'un mois",
-        date_parution=date_parution,
-    )
-    assert result == datetime.date(2024, 2, 15)
-
-
 @pytest.mark.parametrize(
     "jugement, expected",
     [
-        ("Jugement de conversion en liquidation judiciaire", JudgmentEnum.LIQUIDATION),
-        (
-            "Jugement d'ouverture d'une procédure de redressement judiciaire",
-            JudgmentEnum.REDRESSEMENT,
-        ),
-        (
-            "Liste des créances nées après le jugement d'ouverture d'une procédure de liquidation judiciaire",
-            JudgmentEnum.LIQUIDATION,
-        ),
-        (
-            "Jugement de conversion en redressement judiciaire de la procédure de sauvegarde",
-            JudgmentEnum.REDRESSEMENT,
-        ),
-        (
-            "Jugement prononçant la résolution du plan de redressement et la liquidation judiciaire",
-            JudgmentEnum.LIQUIDATION,
-        ),
-        (
-            "Jugement d'ouverture d'une procédure de liquidation judiciaire",
-            JudgmentEnum.LIQUIDATION,
-        ),
-        ("Jugement prononçant la liquidation judiciaire", JudgmentEnum.LIQUIDATION),
-        ("Conversion en liquidation judiciaire", JudgmentEnum.LIQUIDATION),
-        (
-            "Jugement convertissant la procédure en redressement judiciaire",
-            JudgmentEnum.REDRESSEMENT,
-        ),
-        (
-            "Ouverture d'une procédure de redressement judiciaire",
-            JudgmentEnum.REDRESSEMENT,
-        ),
-        ("Jugement arrêtant le plan de redressement", JudgmentEnum.REDRESSEMENT),
-        ("Jugement prononçant la résolution du plan de sauvegarde", None),
-        ("Jugement d'ouverture d'une procédure de sauvegarde", None),
-        (
-            "Jugement de conversion en procédure de redressement judiciaire",
-            JudgmentEnum.REDRESSEMENT,
-        ),
-        ("Jugement de clôture pour insuffisance d'actif", None),
-        (
-            "Jugement prononçant la clôture de la liquidation judiciaire pour insuffisance d'actif",
-            JudgmentEnum.LIQUIDATION,
-        ),
-        ("Résolution du plan de continuation", JudgmentEnum.LIQUIDATION),
-        (
-            "plan de continuation adopté par jugement et a autorisé la cession ",
-            JudgmentEnum.LIQUIDATION,
-        ),
-        ("Résolution du plan de redressement", JudgmentEnum.LIQUIDATION),
+        ("Jugement de conversion en liquidation judiciaire",
+         JudgmentStatusEnum.LIQUIDATION),
+        ("Ouvre la liquidation judiciaire après résolution du plan de redressement",
+         JudgmentStatusEnum.LIQUIDATION),
+        ("Le Tribunal judiciaire de Grenoble, statuant en matière civile, par jugement a prononcé l’ouverture d’une procédure de liquidation judiciaire.",
+         JudgmentStatusEnum.LIQUIDATION),
+        ("Jugement prononçant l'ouverture d'une procédure de redressement judiciaire",
+         JudgmentStatusEnum.REDRESSEMENT),
+        ("Jugement d'ouverture d'une procédure de redressement judiciaire",
+         JudgmentStatusEnum.REDRESSEMENT,),
+        ("Jugement de conversion en redressement judiciaire de la procédure de sauvegarde",
+         JudgmentStatusEnum.REDRESSEMENT,),
+        ("Jugement prononçant la résolution du plan de redressement et la liquidation judiciaire",
+         JudgmentStatusEnum.LIQUIDATION,),
+        ("Jugement a prononcé l’ouverture d’une procédure de liquidation judiciaire simplifiée",
+         JudgmentStatusEnum.LIQUIDATION),
+        ("Par jugement le tribunal judiciaire de Melun a prononcé l’ouverture de la procédure de liquidation judiciaire",
+         JudgmentStatusEnum.LIQUIDATION),
+        ("Jugement prononçant la liquidation judiciaire, date de cessation des paiements le 18 décembre 2023",
+         JudgmentStatusEnum.LIQUIDATION),
+        ("Jugement convertissant la procédure de sauvegarde en procédure de redressement judiciaire",
+         JudgmentStatusEnum.REDRESSEMENT),
+        ("Jugement d'ouverture d'une procédure de liquidation judiciaire",
+         JudgmentStatusEnum.LIQUIDATION),
+        ("Jugement de conversion du redressement en liquidation judiciaire.",
+         JudgmentStatusEnum.LIQUIDATION),
+        ("Jugement prononçant la liquidation judiciaire",
+         JudgmentStatusEnum.LIQUIDATION),
+        ("Conversion en liquidation judiciaire",
+         JudgmentStatusEnum.LIQUIDATION),
+        ("Jugement convertissant la procédure en redressement judiciaire",
+         JudgmentStatusEnum.REDRESSEMENT),
+        ("Ouverture d'une procédure de redressement judiciaire",
+         JudgmentStatusEnum.REDRESSEMENT),
+        ("Jugement de conversion en procédure de redressement judiciaire",
+         JudgmentStatusEnum.REDRESSEMENT),
+        ("Jugement de clôture pour extinction du passif",
+         JudgmentStatusEnum.NOT_RISKY),
+        ("Résolution du plan de redressement",
+         JudgmentStatusEnum.NOT_RISKY),
     ],
 )
+
 def test_resolve_judgment(jugement, expected):
     result = CompanyRiskClient.resolve_judgment(jugement)
     assert result == expected

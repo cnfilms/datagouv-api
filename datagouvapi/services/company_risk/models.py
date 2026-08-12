@@ -4,14 +4,14 @@ from enum import Enum
 from typing import TypedDict, Union, Optional
 
 
-class JudgmentEnum(str, Enum):
+class JudgmentStatusEnum(str, Enum):
     """Nature of court judgment of a company
     French wording is kept to avoid miscomprehension of Bodacc publications
     """
 
     REDRESSEMENT = "REDRESSEMENT"
     LIQUIDATION = "LIQUIDATION"
-    ANNULEE = "ANNULEE"
+    NOT_RISKY = "NOT_RISKY"
 
 
 Identifier = Union[str, int, uuid.UUID]
@@ -23,7 +23,7 @@ class CompanyJudgment(TypedDict):
     identifier: Optional[Identifier]
     siren: Siren
     record_id: str
-    date: datetime.date
+    record_date: datetime.date
+    judgment_date: datetime.date
     raw_data: str
-    judgment: JudgmentEnum
-    expected_end_date: Optional[datetime.date]
+    judgment_status: JudgmentStatusEnum
