@@ -98,8 +98,9 @@ class CompanyRiskClient(GouvApiClient):
         if not (raw_complement or raw_nature or raw_date):
             return None
 
-        resolved_judgment_status = (self.resolve_judgment(raw_nature)
-                                    or self.resolve_judgment(raw_complement))
+        resolved_judgment_status = self.resolve_judgment(
+            raw_nature
+        ) or self.resolve_judgment(raw_complement)
 
         if not (judgment_date := self.resolve_date(raw_date)):
             self._add_warning(record_id, f"Cannot process date: {raw_date}")
@@ -120,7 +121,7 @@ class CompanyRiskClient(GouvApiClient):
             record_date=record_date,
             judgment_date=judgment_date,
             raw_data=raw_jugement,
-            judgment_status=resolved_judgment_status
+            judgment_status=resolved_judgment_status,
         )
 
     def get_processed_risky_companies(self) -> dict[Identifier, list[CompanyJudgment]]:
@@ -178,9 +179,8 @@ class CompanyRiskClient(GouvApiClient):
     @classmethod
     def resolve_judgment(cls, jugement: str) -> Optional[JudgmentStatusEnum]:
         jugement = unaccent(jugement).lower()
-        if (
-                "annulation" in jugement
-                or ("resolution" in jugement and "liquidation" not in jugement)
+        if "annulation" in jugement or (
+            "resolution" in jugement and "liquidation" not in jugement
         ):
             return JudgmentStatusEnum.NOT_RISKY
         if "cloture" in jugement and "extinction" in jugement and "passif" in jugement:
@@ -190,7 +190,6 @@ class CompanyRiskClient(GouvApiClient):
         if "redressement" in jugement:
             return JudgmentStatusEnum.REDRESSEMENT
         return None
-
 
     def get_risky_companies(self) -> GouvSearchResult:
         """

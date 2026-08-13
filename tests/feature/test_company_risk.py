@@ -227,49 +227,79 @@ def test_errors_keep_running_across_batch(make_client, mocker):
 @pytest.mark.parametrize(
     "jugement, expected",
     [
-        ("Jugement de conversion en liquidation judiciaire",
-         JudgmentStatusEnum.LIQUIDATION),
-        ("Ouvre la liquidation judiciaire après résolution du plan de redressement",
-         JudgmentStatusEnum.LIQUIDATION),
-        ("Le Tribunal judiciaire de Grenoble, statuant en matière civile, par jugement a prononcé l’ouverture d’une procédure de liquidation judiciaire.",
-         JudgmentStatusEnum.LIQUIDATION),
-        ("Jugement prononçant l'ouverture d'une procédure de redressement judiciaire",
-         JudgmentStatusEnum.REDRESSEMENT),
-        ("Jugement d'ouverture d'une procédure de redressement judiciaire",
-         JudgmentStatusEnum.REDRESSEMENT,),
-        ("Jugement de conversion en redressement judiciaire de la procédure de sauvegarde",
-         JudgmentStatusEnum.REDRESSEMENT,),
-        ("Jugement prononçant la résolution du plan de redressement et la liquidation judiciaire",
-         JudgmentStatusEnum.LIQUIDATION,),
-        ("Jugement a prononcé l’ouverture d’une procédure de liquidation judiciaire simplifiée",
-         JudgmentStatusEnum.LIQUIDATION),
-        ("Par jugement le tribunal judiciaire de Melun a prononcé l’ouverture de la procédure de liquidation judiciaire",
-         JudgmentStatusEnum.LIQUIDATION),
-        ("Jugement prononçant la liquidation judiciaire, date de cessation des paiements le 18 décembre 2023",
-         JudgmentStatusEnum.LIQUIDATION),
-        ("Jugement convertissant la procédure de sauvegarde en procédure de redressement judiciaire",
-         JudgmentStatusEnum.REDRESSEMENT),
-        ("Jugement d'ouverture d'une procédure de liquidation judiciaire",
-         JudgmentStatusEnum.LIQUIDATION),
-        ("Jugement de conversion du redressement en liquidation judiciaire.",
-         JudgmentStatusEnum.LIQUIDATION),
-        ("Jugement prononçant la liquidation judiciaire",
-         JudgmentStatusEnum.LIQUIDATION),
-        ("Conversion en liquidation judiciaire",
-         JudgmentStatusEnum.LIQUIDATION),
-        ("Jugement convertissant la procédure en redressement judiciaire",
-         JudgmentStatusEnum.REDRESSEMENT),
-        ("Ouverture d'une procédure de redressement judiciaire",
-         JudgmentStatusEnum.REDRESSEMENT),
-        ("Jugement de conversion en procédure de redressement judiciaire",
-         JudgmentStatusEnum.REDRESSEMENT),
-        ("Jugement de clôture pour extinction du passif",
-         JudgmentStatusEnum.NOT_RISKY),
-        ("Résolution du plan de redressement",
-         JudgmentStatusEnum.NOT_RISKY),
+        (
+            "Jugement de conversion en liquidation judiciaire",
+            JudgmentStatusEnum.LIQUIDATION,
+        ),
+        (
+            "Ouvre la liquidation judiciaire après résolution du plan de redressement",
+            JudgmentStatusEnum.LIQUIDATION,
+        ),
+        (
+            "Le Tribunal judiciaire de Grenoble, statuant en matière civile, par jugement a prononcé l’ouverture d’une procédure de liquidation judiciaire.",
+            JudgmentStatusEnum.LIQUIDATION,
+        ),
+        (
+            "Jugement prononçant l'ouverture d'une procédure de redressement judiciaire",
+            JudgmentStatusEnum.REDRESSEMENT,
+        ),
+        (
+            "Jugement d'ouverture d'une procédure de redressement judiciaire",
+            JudgmentStatusEnum.REDRESSEMENT,
+        ),
+        (
+            "Jugement de conversion en redressement judiciaire de la procédure de sauvegarde",
+            JudgmentStatusEnum.REDRESSEMENT,
+        ),
+        (
+            "Jugement prononçant la résolution du plan de redressement et la liquidation judiciaire",
+            JudgmentStatusEnum.LIQUIDATION,
+        ),
+        (
+            "Jugement a prononcé l’ouverture d’une procédure de liquidation judiciaire simplifiée",
+            JudgmentStatusEnum.LIQUIDATION,
+        ),
+        (
+            "Par jugement le tribunal judiciaire de Melun a prononcé l’ouverture de la procédure de liquidation judiciaire",
+            JudgmentStatusEnum.LIQUIDATION,
+        ),
+        (
+            "Jugement prononçant la liquidation judiciaire, date de cessation des paiements le 18 décembre 2023",
+            JudgmentStatusEnum.LIQUIDATION,
+        ),
+        (
+            "Jugement convertissant la procédure de sauvegarde en procédure de redressement judiciaire",
+            JudgmentStatusEnum.REDRESSEMENT,
+        ),
+        (
+            "Jugement d'ouverture d'une procédure de liquidation judiciaire",
+            JudgmentStatusEnum.LIQUIDATION,
+        ),
+        (
+            "Jugement de conversion du redressement en liquidation judiciaire.",
+            JudgmentStatusEnum.LIQUIDATION,
+        ),
+        (
+            "Jugement prononçant la liquidation judiciaire",
+            JudgmentStatusEnum.LIQUIDATION,
+        ),
+        ("Conversion en liquidation judiciaire", JudgmentStatusEnum.LIQUIDATION),
+        (
+            "Jugement convertissant la procédure en redressement judiciaire",
+            JudgmentStatusEnum.REDRESSEMENT,
+        ),
+        (
+            "Ouverture d'une procédure de redressement judiciaire",
+            JudgmentStatusEnum.REDRESSEMENT,
+        ),
+        (
+            "Jugement de conversion en procédure de redressement judiciaire",
+            JudgmentStatusEnum.REDRESSEMENT,
+        ),
+        ("Jugement de clôture pour extinction du passif", JudgmentStatusEnum.NOT_RISKY),
+        ("Résolution du plan de redressement", JudgmentStatusEnum.NOT_RISKY),
     ],
 )
-
 def test_resolve_judgment(jugement, expected):
     result = CompanyRiskClient.resolve_judgment(jugement)
     assert result == expected
