@@ -17,7 +17,8 @@ BASE_WHERE_CLAUSE = (
     'not (jugement like "%rejet%") AND '
     'not (jugement like "%extension%") AND '
     'not (jugement like "%clôture%") AND '
-    'not (jugement like "%liste des créances%")'
+    'not (jugement like "%liste des créances%") AND '
+    'not (jugement like "%état des créances%")'
     ") OR "
     # Conversion de plan autre en RJ
     "("
