@@ -16,7 +16,8 @@ BASE_WHERE_CLAUSE = (
     '(jugement like "%redressement%" OR jugement like "%liquidation%") AND '
     'not (jugement like "%rejet%") AND '
     'not (jugement like "%extension%") AND '
-    'not (jugement like "%clôture%")'
+    'not (jugement like "%clôture%") AND '
+    'not (jugement like "%liste des créances%")'
     ") OR "
     # Conversion de plan autre en RJ
     "("
@@ -44,13 +45,7 @@ BASE_WHERE_CLAUSE = (
     # Rectification d'erreur ; à remonter en cas de changement de status
     "("
     'jugement like "%erreur%" AND '
-    'jugement like "%materielle%"'
-    ") OR "
-    # Clôture pour extinction du passif (retour à la normale)
-    "("
-    'jugement like "%clôture%" AND '
-    'jugement like "%extinction%" AND '
-    'jugement like "%passif%"'
+    'jugement like "%matérielle%"'
     ")"
     ")"
 )
