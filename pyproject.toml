@@ -3,7 +3,7 @@ name = "datagouv-api"
 version = "1.0.0"
 description = "French Gouv Opendata API client"
 keywords = ["opendata", "gouv", "data.gouv.fr", "bodacc", "calendrier-scolaire"]
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 readme = "README.md"
 authors = [
     { name = "CNFilms", email = "technique@cinego.net" }
